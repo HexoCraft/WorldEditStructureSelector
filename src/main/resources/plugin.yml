@@ -1,0 +1,12 @@
+name: ${project.name}
+version: ${project.version}
+description: ${project.description}
+main: com.github.hexocraft.wss.WssPlugin
+
+author: hexosse
+website: www.github.hexosse
+
+depend: [WorldEdit]
+
+permissions:
+  wss.admin: {default: op}
