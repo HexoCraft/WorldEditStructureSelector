@@ -27,7 +27,7 @@ The plugin use metrics and an integrated updater.<br>Both can be disabled in con
 
 ### How to use WSS :
 - Enable it : /wss enable
-- Get the WorldEdit wand : /wand
+- Get the WorldEdit wand : //wand
 - Left click on your structure. By default, the selection size is defined to 32 x 32 x 32 but it can easily be changed in the config.yml or in game.
 
 ![Tree selection](./img/selection_tree1.png)
