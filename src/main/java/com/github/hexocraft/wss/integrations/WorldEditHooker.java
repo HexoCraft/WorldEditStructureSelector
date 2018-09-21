@@ -18,80 +18,53 @@ package com.github.hexocraft.wss.integrations;
 
 import com.github.hexocraft.wss.utils.Box;
 import com.github.hexocraftapi.integration.Hooker;
-import com.sk89q.worldedit.IncompleteRegionException;
+import com.github.hexocraftapi.message.predifined.message.WarningMessage;
 import com.sk89q.worldedit.LocalSession;
+import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.bukkit.BukkitPlayer;
-import com.sk89q.worldedit.bukkit.BukkitWorld;
-import com.sk89q.worldedit.bukkit.selections.CuboidSelection;
-import com.sk89q.worldedit.bukkit.selections.Selection;
-import com.sk89q.worldedit.regions.Region;
-import com.sk89q.worldedit.regions.RegionSelector;
-import org.bukkit.Location;
+import com.sk89q.worldedit.extension.platform.permission.ActorSelectorLimits;
+import com.sk89q.worldedit.regions.selector.CuboidRegionSelector;
 import org.bukkit.entity.Player;
 
+public class WorldEditHooker extends Hooker<com.sk89q.worldedit.bukkit.WorldEditPlugin, WorldEditHooker> {
+    public WorldEditHooker() {
+        super();
+    }
 
-public class WorldEditHooker extends Hooker<com.sk89q.worldedit.bukkit.WorldEditPlugin,WorldEditHooker>
-{
-	public WorldEditHooker() {
-		super();
-	}
+    // Capture the plugin if exist
+    public WorldEditHooker capture(com.sk89q.worldedit.bukkit.WorldEditPlugin worldEditPlugin) {
+        this.plugin = worldEditPlugin;
+        return this;
+    }
 
-	// Capture the plugin if exist
-	public WorldEditHooker capture(com.sk89q.worldedit.bukkit.WorldEditPlugin worldEditPlugin)
-	{
-		this.plugin = worldEditPlugin;
-		return this;
-	}
+    public void select(Player player, Box box) {
+        if(player == null) throw new IllegalArgumentException("Null player not allowed");
+        if(!player.isOnline()) throw new IllegalArgumentException("Offline player not allowed");
 
-	public void select(Player player, Box box)
-	{
-		if(player == null) throw new IllegalArgumentException("Null player not allowed");
-		if(!player.isOnline()) throw new IllegalArgumentException("Offline player not allowed");
+        //
+        BukkitPlayer worldEditPlayer = plugin.wrapPlayer(player);
+        LocalSession session = WorldEdit.getInstance().getSessionManager().get(worldEditPlayer);
 
-		if(box == null) {
-			BukkitPlayer worldEditPlayer = plugin.wrapPlayer(player);
-			LocalSession session = WorldEdit.getInstance().getSessionManager().get(worldEditPlayer);
-			session.getRegionSelector(worldEditPlayer.getWorld()).clear();
-			session.dispatchCUISelection(worldEditPlayer);
-			return;
-		}
+        //
+        if(box == null) {
+            session.getRegionSelector(worldEditPlayer.getWorld()).clear();
+            session.dispatchCUISelection(worldEditPlayer);
+            return;
+        }
+        else {
+            Vector vLower = new Vector(box.getLower().getX(), box.getLower().getY(), box.getLower().getZ());
+            Vector vUpper = new Vector(box.getUpper().getX() - 1, box.getUpper().getY() - 1, box.getUpper().getZ() - 1);
 
-		Location lower = new Location(player.getWorld(), box.getLower().getX(), box.getLower().getY(), box.getLower().getZ());
-		Location upper = new Location(player.getWorld(), box.getUpper().getX()-1, box.getUpper().getY()-1, box.getUpper().getZ()-1);
-		plugin.setSelection(player, new CuboidSelection(player.getWorld(), lower, upper));
-	}
+            CuboidRegionSelector selector = new CuboidRegionSelector(worldEditPlayer.getWorld());
+            selector.selectPrimary(vLower, ActorSelectorLimits.forActor(worldEditPlayer));
+            selector.selectSecondary(vUpper, ActorSelectorLimits.forActor(worldEditPlayer));
+            session.setRegionSelector(worldEditPlayer.getWorld(), selector);
+            session.dispatchCUISelection(worldEditPlayer);
 
-	/**
-	 * this function is inspired from com.sk89q.worldedit.bukkit.WorldEditPlugin.getSelection
-	 *
-	 * @param player Player
-	 * @return player region
-	 */
-	@SuppressWarnings("deprecation")
-	public Region getRegion(Player player)
-	{
-		if(player == null) throw new IllegalArgumentException("Null player not allowed");
-		if(!player.isOnline()) throw new IllegalArgumentException("Offline player not allowed");
-
-		BukkitPlayer worldEditPlayer = plugin.wrapPlayer(player);
-		LocalSession session = WorldEdit.getInstance().getSessionManager().get(worldEditPlayer);
-		RegionSelector selector = session.getRegionSelector(worldEditPlayer.getWorld());
-		try {
-			return selector.getRegion();
-		} catch (IncompleteRegionException e) {
-			return null;
-		}
-	}
-
-	/**
-	 * @param player Player
-	 * @param location Location
-	 * @return true if @location is in @player selection
-	 */
-	public boolean isLocationInSelection(Player player, Location location)
-	{
-		Selection selection = plugin.getSelection(player);
-		return selection != null && selection.contains(location);
-	}
+            WarningMessage.toPlayer(player, "Structure selection done.");
+            WarningMessage.toPlayer(player, "Pos1 set to " + vLower.toString());
+            WarningMessage.toPlayer(player, "Pos2 set to " + vUpper.toString());
+        }
+    }
 }

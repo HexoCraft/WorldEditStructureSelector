@@ -19,6 +19,7 @@ package com.github.hexocraft.wss.listeners;
 import com.github.hexocraft.wss.WssApi;
 import com.github.hexocraft.wss.WssPlugin;
 import com.github.hexocraft.wss.configuration.Permissions;
+import com.github.hexocraftapi.message.predifined.message.WarningMessage;
 import com.github.hexocraftapi.util.PlayerUtil;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -60,7 +61,7 @@ public class PlayerListener implements Listener
 		//
 		if((event.getAction().equals(Action.LEFT_CLICK_BLOCK) || event.getAction().equals(Action.RIGHT_CLICK_BLOCK))
 		   && PlayerUtil.getItemInHand(player) != null
-		   && PlayerUtil.getItemInHand(player).getType() == Material.WOOD_AXE
+		   && isWoodenAxe(PlayerUtil.getItemInHand(player).getType())
 		   && Permissions.has(player, Permissions.ADMIN))
 		{
 			// Clicked location
@@ -71,6 +72,13 @@ public class PlayerListener implements Listener
 
 			// Select structure
 			WssApi.select(player, clickedLoc);
+            WarningMessage.toPlayer(player, "Selecting structure ...");
 		}
 	}
+
+	private boolean isWoodenAxe(Material type) {
+        return type.toString().contains("WOOD_AXE")
+               || type.toString().contains("WOODEN_AXE")
+               || type.toString().contains("LEGACY_WOOD_AXE");
+    }
 }
